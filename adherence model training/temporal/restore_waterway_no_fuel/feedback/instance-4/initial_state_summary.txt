@@ -1,0 +1,40 @@
+Here is a summary of the PDDL constraints:
+
+**Asset Constraints**
+
+* `deb_ast_0` is not moving, not removing debris, and not unloading debris.
+* `sct_ast_0` is not scouting.
+* `shp_sal_ast_0` is not docking, salvaging, or towing ships.
+
+**Location Constraints**
+
+* All assets (`deb_ast_0`, `sct_ast_0`, and `shp_sal_ast_0`) are at location `wpt_ini`.
+
+**Functional Constraints**
+
+* Asset speeds: `deb_ast_0` = 10 km/h, `sct_ast_0` = 20 km/h, `shp_sal_ast_0` = 10 km/h.
+* Debris asset properties:
+	+ Debris capacity: 1000 kg
+	+ Debris unload rate: 2000 kg/h
+	+ Initial debris weight: 0 kg
+	+ Normal debris removal rate: 100 kg/h
+	+ Underwater debris removal rate: 50 kg/h
+* Scout asset property: scout time = 1 h.
+* Ship salvage asset properties:
+	+ Dock time: 1 h
+	+ Salvage time: 1 h
+
+**Debris Constraints**
+
+* Normal debris locations: `n_deb_ini_a_0` is at `wpt_ini` and `wpt_a_0`, while `n_deb_a_0_end` is at `wpt_a_0` and `wpt_end`.
+* Underwater debris locations: `u_deb_ini_b_0` is at `wpt_ini` and `wpt_b_0`, while `u_deb_b_0_end` is at `wpt_b_0` and `wpt_end`.
+* Debris weights:
+	+ Normal debris: 1500 kg (initial), 100 kg (final)
+	+ Underwater debris: 1500 kg (initial), 100 kg (final)
+
+**Authority Constraints**
+
+* Authority over locations: `aut_a` has authority over `wpt_a_0`, while `aut_b` has authority over `wpt_b_0`.
+* Reply times:
+	+ `aut_a`: 0.1 h
+	+ `aut_b`: 0.1 h

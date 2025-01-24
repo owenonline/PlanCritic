@@ -1,0 +1,25 @@
+The provided PDDL (Planning Domain Definition Language) constraints describe a domain involving ships, assets, debris, and authorities. Here's a summary of the main constraints:
+
+**Connected Locations**: There are several waypoints (wpt_ini, wpt_b_0, ..., wpt_end) with distances between them defined.
+
+**Ship Constraints**:
+
+* Ship `shp_0` is at waypoint `wpt_end`.
+* Ship `shp_0` is a shipwreck (`is_shipwreck`).
+
+**Asset Constraints**:
+
+* Asset `deb_ast_0` (debris asset), `sct_ast_0` (scout asset), and `shp_sal_ast_0` (ship salvage asset) are at waypoint `wpt_ini`.
+* Each asset has specific speeds, capacities, and rates (e.g., debris unload rate, scout time, dock time).
+
+**Debris Constraints**:
+
+* Normal debris (`n_deb_ini_a_0`, ..., `n_deb_a_2_end`) and underwater debris (`u_deb_ini_b_0`, ..., `u_deb_b_2_end`) are located at specific waypoints.
+* Debris weights are defined for each piece.
+
+**Authority Constraints**:
+
+* Authorities `aut_a` and `aut_b` have authority over specific waypoints (wpt_a_0, wpt_a_1, ..., wpt_b_2).
+* Each authority has a reply time (0.1 hours).
+
+These constraints define the initial state of the planning problem, including the locations, properties, and relationships between ships, assets, debris, and authorities.

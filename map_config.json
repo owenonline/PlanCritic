@@ -1,0 +1,16 @@
+{
+    "locations": {
+        "wpt_ini": [45.717599, -73.440599],
+        "wpt_a_0": [45.463874, -73.971181],
+        "wpt_b_0": [45.430800, -73.544315],
+        "wpt_end": [45.335075, -73.936037],
+        "shp_dck_0": [45.761269, -73.390026],
+        "deb_stn_0": [45.761269, -73.390026]
+    },
+    "assets": {
+        "shp_0": "ship",
+        "deb_ast_0": "debris_asset",
+        "sct_ast_0": "scout_asset",
+        "shp_sal_ast_0": "ship_salvage_asset"
+    }
+}

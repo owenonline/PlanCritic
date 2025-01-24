@@ -1,0 +1,646 @@
+[
+    {
+        "feedback": [
+            {
+                "feedback": "Ensure that at the end of the plan, either wpt_ini is a debris station or underwater debris is visible at wpt_b_0.",
+                "constraint": "(at end (or (is_location_debris_station wpt_ini) (is_underwater_debris_visible wpt_b_0)))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that shp_dck_0 is never connected to deb_stn_0.",
+                "constraint": "(always (not (is_location_connected shp_dck_0 deb_stn_0)))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that after 2 time steps, shp_dck_0 and wpt_end are not blocked.",
+                "constraint": "(hold-after 2 (is_location_not_blocked shp_dck_0 wpt_end))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that either wpt_ini is a debris station or underwater debris is visible at wpt_b_0 at all times.",
+                "constraint": "(always (or (is_location_debris_station wpt_ini) (is_underwater_debris_visible wpt_b_0)))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that wpt_a_0 is never connected to wpt_ini at all times.",
+                "constraint": "(always (not (is_location_connected wpt_a_0 wpt_ini)))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that shp_dck_0 is not blocked from wpt_end at all times.",
+                "constraint": "(always (is_location_not_blocked shp_dck_0 wpt_end))",
+                "obeyed": 0
+            }
+        ],
+        "plan": [
+            {
+                "time_step": "0.000",
+                "action": "(authority_make_location_unrestricted wpt_b_0 aut_b)",
+                "duration": "0.100"
+            },
+            {
+                "time_step": "0.000",
+                "action": "(authority_make_location_unrestricted wpt_a_0 aut_a)",
+                "duration": "0.100"
+            },
+            {
+                "time_step": "0.000",
+                "action": "(remove_normal_debris_partial wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "10.000"
+            },
+            {
+                "time_step": "0.101",
+                "action": "(move_scout_asset wpt_ini wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "0.602",
+                "action": "(scout_location wpt_a_0 sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "1.602",
+                "action": "(move_scout_asset wpt_a_0 wpt_ini sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "2.103",
+                "action": "(move_scout_asset wpt_ini wpt_b_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "2.603",
+                "action": "(scout_location wpt_b_0 sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "10.000",
+                "action": "(move_debris_asset wpt_ini deb_stn_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "11.000",
+                "action": "(unload_debris_debris_station deb_stn_0 deb_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "11.500",
+                "action": "(move_debris_asset deb_stn_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "12.500",
+                "action": "(remove_normal_debris_total wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "5.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_debris_asset wpt_ini wpt_a_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_ship_salvage_asset wpt_ini wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "18.000",
+                "action": "(move_scout_asset wpt_b_0 wpt_end sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "18.500",
+                "action": "(scout_location wpt_end sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "18.500",
+                "action": "(remove_normal_debris_total wpt_a_0 wpt_end n_deb_a_0_end deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_scout_asset wpt_end wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_debris_asset wpt_a_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_end shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "20.001",
+                "action": "(move_scout_asset wpt_a_0 wpt_ini sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "20.500",
+                "action": "(ship_salvage_asset_salvage_ship wpt_end shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "21.500",
+                "action": "(move_ship_salvage_asset wpt_end wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "22.501",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "23.502",
+                "action": "(move_ship_salvage_asset wpt_ini shp_dck_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "24.502",
+                "action": "(ship_salvage_asset_dock_ship shp_dck_0 shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "25.502",
+                "action": "(move_ship_salvage_asset shp_dck_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            }
+        ]
+    },
+    {
+        "feedback": [
+            {
+                "feedback": "Ensure that authority aut_a has control over wpt_end after 9 time steps.",
+                "constraint": "(hold-after 9 (has_authority_over_location aut_a wpt_end))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that the location wpt_end is always blocked by the ship dock shp_dck_0.",
+                "constraint": "(always (not (is_location_not_blocked wpt_end shp_dck_0)))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that authority aut_a has control over wpt_end after 3 time steps.",
+                "constraint": "(hold-after 3 (has_authority_over_location aut_a wpt_end))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that wpt_ini is always blocked by debris station deb_stn_0.",
+                "constraint": "(always (not (is_location_not_blocked wpt_ini deb_stn_0)))",
+                "obeyed": 0
+            }
+        ],
+        "plan": [
+            {
+                "time_step": "0.000",
+                "action": "(authority_make_location_unrestricted wpt_a_0 aut_a)",
+                "duration": "0.100"
+            },
+            {
+                "time_step": "0.000",
+                "action": "(remove_normal_debris_partial wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "10.000"
+            },
+            {
+                "time_step": "0.101",
+                "action": "(move_scout_asset wpt_ini wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "0.602",
+                "action": "(scout_location wpt_a_0 sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "1.602",
+                "action": "(move_scout_asset wpt_a_0 wpt_end sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "2.102",
+                "action": "(scout_location wpt_end sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "3.102",
+                "action": "(move_scout_asset wpt_end wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "3.603",
+                "action": "(move_scout_asset wpt_a_0 wpt_ini sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "10.000",
+                "action": "(move_debris_asset wpt_ini deb_stn_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "11.000",
+                "action": "(unload_debris_debris_station deb_stn_0 deb_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "11.500",
+                "action": "(move_debris_asset deb_stn_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "12.500",
+                "action": "(remove_normal_debris_total wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "5.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_debris_asset wpt_ini wpt_a_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_ship_salvage_asset wpt_ini wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "18.500",
+                "action": "(remove_normal_debris_total wpt_a_0 wpt_end n_deb_a_0_end deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_debris_asset wpt_a_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_end shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "20.500",
+                "action": "(ship_salvage_asset_salvage_ship wpt_end shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "21.500",
+                "action": "(move_ship_salvage_asset wpt_end wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "22.501",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "23.502",
+                "action": "(move_ship_salvage_asset wpt_ini shp_dck_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "24.502",
+                "action": "(ship_salvage_asset_dock_ship shp_dck_0 shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "25.502",
+                "action": "(move_ship_salvage_asset shp_dck_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            }
+        ]
+    },
+    {
+        "feedback": [
+            {
+                "feedback": "Ensure that after u_deb_ini_b_0 is on u_deb_b_0_end, the location wpt_b_0 is not blocked by debris station deb_stn_0.",
+                "constraint": "(sometime-after (on u_deb_b_0_end u_deb_ini_b_0) (is_location_not_blocked wpt_b_0 deb_stn_0))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that deb_stn_0 is connected to shp_dck_0 for at least 3 time steps.",
+                "constraint": "(hold-after 3 (is_location_connected deb_stn_0 shp_dck_0))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that the shipwreck shp_0 is never at wpt_ini.",
+                "constraint": "(always (not (at shp_0 wpt_ini)))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that wpt_b_0 is a ship dock after at least 1 time step.",
+                "constraint": "(hold-after 1 (is_location_ship_dock wpt_b_0))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that at some point, wpt_end is connected to wpt_a_0.",
+                "constraint": "(sometime (is_location_connected wpt_end wpt_a_0))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that the shipwreck shp_0 is on the ship salvage asset shp_sal_ast_0 after the location wpt_b_0 is not blocked by debris station deb_stn_0.",
+                "constraint": "(sometime-after (on shp_0 shp_sal_ast_0) (is_location_not_blocked wpt_b_0 deb_stn_0))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that the location deb_stn_0 is connected to the ship dock shp_dck_0 after 3 time steps.",
+                "constraint": "(hold-after 3 (is_location_connected deb_stn_0 shp_dck_0))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that the scout asset sct_ast_0 is never at the initial waypoint wpt_ini.",
+                "constraint": "(always (not (at sct_ast_0 wpt_ini)))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that at some point, wpt_b_0 is recognized as a ship dock.",
+                "constraint": "(sometime (is_location_ship_dock wpt_b_0))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that at some point, the ship dock shp_dck_0 is connected to waypoint wpt_a_0.",
+                "constraint": "(sometime (is_location_connected shp_dck_0 wpt_a_0))",
+                "obeyed": 0
+            }
+        ],
+        "plan": [
+            {
+                "time_step": "0.000",
+                "action": "(authority_make_location_unrestricted wpt_a_0 aut_a)",
+                "duration": "0.100"
+            },
+            {
+                "time_step": "0.000",
+                "action": "(remove_normal_debris_partial wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "10.000"
+            },
+            {
+                "time_step": "0.101",
+                "action": "(move_scout_asset wpt_ini wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "0.602",
+                "action": "(scout_location wpt_a_0 sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "1.602",
+                "action": "(move_scout_asset wpt_a_0 wpt_end sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "2.102",
+                "action": "(scout_location wpt_end sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "3.102",
+                "action": "(move_scout_asset wpt_end wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "3.603",
+                "action": "(move_scout_asset wpt_a_0 wpt_ini sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "10.000",
+                "action": "(move_debris_asset wpt_ini deb_stn_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "11.000",
+                "action": "(unload_debris_debris_station deb_stn_0 deb_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "11.500",
+                "action": "(move_debris_asset deb_stn_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "12.500",
+                "action": "(remove_normal_debris_total wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "5.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_debris_asset wpt_ini wpt_a_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_ship_salvage_asset wpt_ini wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "18.500",
+                "action": "(remove_normal_debris_total wpt_a_0 wpt_end n_deb_a_0_end deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_debris_asset wpt_a_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_end shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "20.500",
+                "action": "(ship_salvage_asset_salvage_ship wpt_end shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "21.500",
+                "action": "(move_ship_salvage_asset wpt_end wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "22.501",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "23.502",
+                "action": "(move_ship_salvage_asset wpt_ini shp_dck_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "24.502",
+                "action": "(ship_salvage_asset_dock_ship shp_dck_0 shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "25.502",
+                "action": "(move_ship_salvage_asset shp_dck_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            }
+        ]
+    },
+    {
+        "feedback": [
+            {
+                "feedback": "Ensure that either shp_dck_0 is a ship dock or shp_0 is at wpt_end at all times.",
+                "constraint": "(always (or (is_location_ship_dock shp_dck_0) (at shp_0 wpt_end)))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that shp_dck_0 is not blocked at most once in relation to wpt_end.",
+                "constraint": "(at-most-once (is_location_not_blocked shp_dck_0 wpt_end))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that wpt_ini becomes unrestricted before deb_stn_0 becomes a debris station at some point.",
+                "constraint": "(sometime-before (is_location_unrestricted wpt_ini) (is_location_debris_station deb_stn_0))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that shp_dck_0 is unrestricted at the end.",
+                "constraint": "(at end (is_location_unrestricted shp_dck_0))",
+                "obeyed": 1
+            },
+            {
+                "feedback": "Ensure that either shp_dck_0 is not a ship dock or shp_0 is not at wpt_end at all times.",
+                "constraint": "(always (or (not (is_location_ship_dock shp_dck_0)) (not (at shp_0 wpt_end))))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that at some point, the location shp_dck_0 is not blocked from wpt_end.",
+                "constraint": "(sometime (is_location_not_blocked shp_dck_0 wpt_end))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that sometime before the location wpt_ini is unrestricted, the location deb_stn_0 is a debris station.",
+                "constraint": "(sometime-before (is_location_unrestricted wpt_ini) (is_location_debris_station deb_stn_0))",
+                "obeyed": 0
+            },
+            {
+                "feedback": "Ensure that at the end, the location wpt_b_0 is unrestricted.",
+                "constraint": "(at end (is_location_unrestricted wpt_b_0))",
+                "obeyed": 0
+            }
+        ],
+        "plan": [
+            {
+                "time_step": "0.000",
+                "action": "(authority_make_location_unrestricted wpt_a_0 aut_a)",
+                "duration": "0.100"
+            },
+            {
+                "time_step": "0.000",
+                "action": "(remove_normal_debris_partial wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "10.000"
+            },
+            {
+                "time_step": "0.101",
+                "action": "(move_scout_asset wpt_ini wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "0.602",
+                "action": "(scout_location wpt_a_0 sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "1.602",
+                "action": "(move_scout_asset wpt_a_0 wpt_end sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "2.102",
+                "action": "(scout_location wpt_end sct_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "3.102",
+                "action": "(move_scout_asset wpt_end wpt_a_0 sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "3.603",
+                "action": "(move_scout_asset wpt_a_0 wpt_ini sct_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "10.000",
+                "action": "(move_debris_asset wpt_ini deb_stn_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "11.000",
+                "action": "(unload_debris_debris_station deb_stn_0 deb_ast_0)",
+                "duration": "0.500"
+            },
+            {
+                "time_step": "11.500",
+                "action": "(move_debris_asset deb_stn_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "12.500",
+                "action": "(remove_normal_debris_total wpt_ini wpt_a_0 n_deb_ini_a_0 deb_ast_0)",
+                "duration": "5.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_debris_asset wpt_ini wpt_a_0 deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "17.500",
+                "action": "(move_ship_salvage_asset wpt_ini wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "18.500",
+                "action": "(remove_normal_debris_total wpt_a_0 wpt_end n_deb_a_0_end deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_debris_asset wpt_a_0 wpt_ini deb_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "19.500",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_end shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "20.500",
+                "action": "(ship_salvage_asset_salvage_ship wpt_end shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "21.500",
+                "action": "(move_ship_salvage_asset wpt_end wpt_a_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "22.501",
+                "action": "(move_ship_salvage_asset wpt_a_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "23.502",
+                "action": "(move_ship_salvage_asset wpt_ini shp_dck_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "24.502",
+                "action": "(ship_salvage_asset_dock_ship shp_dck_0 shp_0 shp_sal_ast_0)",
+                "duration": "1.000"
+            },
+            {
+                "time_step": "25.502",
+                "action": "(move_ship_salvage_asset shp_dck_0 wpt_ini shp_sal_ast_0)",
+                "duration": "1.000"
+            }
+        ]
+    }
+]

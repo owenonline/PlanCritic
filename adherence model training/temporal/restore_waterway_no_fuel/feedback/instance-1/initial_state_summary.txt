@@ -1,0 +1,34 @@
+Here is a summary of the PDDL constraints:
+
+**Location Constraints:**
+
+* `deb_ast_0` is at location `wpt_ini`.
+* `sct_ast_0` is at location `wpt_ini`.
+* `shp_sal_ast_0` is at location `wpt_ini`.
+* `n_deb_ini_a_0` is at locations `wpt_ini` and `wpt_a_0`.
+* `n_deb_a_0_end` is at locations `wpt_a_0` and `wpt_end`.
+* `u_deb_ini_b_0` is at locations `wpt_ini` and `wpt_b_0`.
+* `u_deb_b_0_end` is at locations `wpt_b_0` and `wpt_end`.
+* The ship is at location `wpt_ini`.
+
+**Debris Constraints:**
+
+* `n_deb_ini_a_0` has a weight of 100 kg.
+* `n_deb_a_0_end` has a weight of 100 kg.
+* `u_deb_ini_b_0` has a weight of 100 kg.
+* `u_deb_b_0_end` has a weight of 100 kg.
+
+**Authority Constraints:**
+
+* `aut_a` has authority over location `wpt_a_0`.
+* `aut_b` has authority over location `wpt_b_0`.
+* The reply time for `aut_a` is 0.1 hours.
+* The reply time for `aut_b` is 0.1 hours.
+
+**Asset Constraints:**
+
+* `deb_ast_0` has a speed of 10 km/h and can remove debris at a normal rate of 100 kg/h, underwater rate of 50 kg/h, and unload rate of 2000 kg/h.
+* `sct_ast_0` has a speed of 20 km/h and can scout for 1 hour.
+* `shp_sal_ast_0` has a speed of 10 km/h and can dock for 1 hour, salvage for 1 hour, and tow ships.
+
+Let me know if you'd like me to clarify or expand on any of these constraints!
