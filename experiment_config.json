@@ -1,0 +1,17 @@
+{
+    "domain": "restore_waterway_no_fuel",
+    "problem": 1,
+    "problem_archetypes": {
+        "All underwater debris is removed": ["(at end (is_location_not_blocked wpt_ini wpt_b_0))", "(at end (is_location_not_blocked wpt_b_0 wpt_end))"],
+        "Waypoint b is made unrestricted": ["(at end (is_location_unrestricted wpt_b_0))"],
+        "Scout asset reaches end point before debris asset moves": ["(sometime-before (at deb_ast_0 wpt_a_0) (at sct_ast_0 wpt_end))", "(sometime-before (at deb_ast_0 wpt_b_0) (at sct_ast_0 wpt_end))", "(sometime-before (at deb_ast_0 shp_dck_0) (at sct_ast_0 wpt_end))", "(sometime-before (at deb_ast_0 deb_stn_0) (at sct_ast_0 wpt_end))"],
+        "No assets visit waypoint a": ["(always (not (at deb_ast_0 wpt_a_0)))", "(always (not (at sct_ast_0 wpt_a_0)))", "(always (not (at shp_sal_ast_0 wpt_a_0)))"],
+        "Step 6 happens before step 5": ["(sometime-before (not (at shp_sal_ast_0 wpt_ini)) (is_underwater_debris_visible wpt_end))", "(sometime-before (not (at deb_ast_0 wpt_ini)) (is_underwater_debris_visible wpt_end))"],
+        "All of the underwater debris is removed and none of the normal debris is removed": ["(at end (is_location_not_blocked wpt_ini wpt_b_0))", "(at end (is_location_not_blocked wpt_b_0 wpt_end))", "(at end (at n_deb_ini_a_0 wpt_a_0))", "(at end (at n_deb_a_0_end wpt_a_0))"],
+        "Debris asset ends at waypoint b": ["(at end (at deb_ast_0 wpt_b_0))"],
+        "All assets are at the ship dock at the end of the plan": ["(at end (at deb_ast_0 shp_dck_0))", "(at end (at shp_sal_ast_0 shp_dck_0))", "(at end (at sct_ast_0 shp_dck_0))"],
+        "Scout asset reaches shipwreck before debris asset reaches shipwreck": ["(sometime-before (at deb_ast_0 wpt_end) (at sct_ast_0 wpt_end))"],
+        "Scout asset reaches shipwreck before debris asset reaches shipwreck and no underwater debris is removed": ["(sometime-before (at deb_ast_0 wpt_end) (at sct_ast_0 wpt_end))", "(at end (at u_deb_ini_b_0 wpt_b_0))", "(at end (at u_deb_b_0_end wpt_b_0))"]
+    },
+    "couchdb_database": "plancritic_testing_june"
+}

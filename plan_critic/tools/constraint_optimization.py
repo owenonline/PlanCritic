@@ -228,19 +228,21 @@ class GeneticOptimizer:
 
         new_problem = self.problem_text.replace("(:goal", f"{constraints_tag}\n(:goal")
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete_on_close=False, delete=False) as tf:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False) as tf:
             tf.write(new_problem)
             candidate_problem_path = tf.name
             tf.close()
 
             
-            command = ["gtimeout", timeout, self.optic_path, "-N", self.domain_path, candidate_problem_path] # timeout is linux, gtimeout is mac
+            command = ["timeout", timeout, self.optic_path, "-N", self.domain_path, candidate_problem_path]
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, 
                     universal_newlines=True, text=True, encoding="utf-8")
             
             stdout, stderr = process.communicate()
             parser = OpticParser()
             plan = parser.injest_stdout(stdout)
+
+            os.remove(candidate_problem_path)
 
             if plan is None:
                 return False, None

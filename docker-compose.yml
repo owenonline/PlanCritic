@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  plan-critic:
+    build: .
+    container_name: plan-critic
+    volumes:
+      # Mount the current directory to /workspace to ensure code changes are reflected
+      - ./adherence_model_training:/workspace/adherence_model_training
+      - ./domains:/workspace/domains
+      - ./experiment_config.json:/workspace/experiment_config.json
+      - ./rephrased_goals.pkl:/workspace/rephrased_goals.pkl
+    networks:
+      - host
+    environment:
+      # Set CouchDB URL for connecting to host
+      - COUCHDB_URL=http://admin:password@host.docker.internal:5984/
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    extra_hosts:
+      # Add host.docker.internal for Linux Docker to connect to host services
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+volumes:
+  plan-critic-tools:
+
+networks:
+  host:
+    driver: bridge 

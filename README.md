@@ -1,14 +1,6 @@
 # Plan Critic
 
-A component designed to modify plans based on user feedback.
-
-## About
-
-This repository contains a component designed to execute a plan-feedback-replan loop on a user's command, sending a natural language plan summary to the user interface, receiving their feedback, and using a genetic algorithm to evolve the plan to match that feedback.
-
-## Getting Started
-
-The client code in this repository assumes that the pycourier package is installed, as well as the requirements for the Paho MQTT client.  See [https://gitlab.com/cmu_aart/onr_cai/messaging_backbone](https://gitlab.com/cmu_aart/onr_cai/messaging_backbone) for details on installing.
+A system for executing a plan-feedback-replan loop on a user's command, sending a natural language plan summary to the user interface, receiving their feedback, and using a genetic algorithm to evolve the plan to match that feedback.
 
 ### Installation
 
@@ -16,31 +8,39 @@ Local installation of the repository can be performed with the following steps::
 
 1.  Clone the repository
     ```
-    git clone https://gitlab.com/cmu_aart/onr_cai/plan-critic.git
+    git clone git@github.com:owenonline/PlanCritic.git
     ```
 
 2.  cd to this folder
 
     ```
-    cd plan-critic
+    cd PlanCritic
     ```
 
-3.  Install locally via pip
+3.  Build the docker image
     ```
-    pip install -e .
+    docker compose up --build -d
     ```
 
 ## Usage
 
-Once installed via `pip`, an environment can be started with the following command
+Once installed via `pip`, the test data must be generated. Follow the instructions in `adherence model training/README.md` to generate the test data. When that is finished, run the following command to execute the experiment:
 
 ```
-python -m plan_critic.run [--config <config.yaml>]
+docker exec <container_id> python -m plan_critic.run
 ```
 
-The command line arguments are defined as follows:
+## Configuring the experiment
 
-- `config.yaml` (required):  Defines the mode in which the planner runs. Run in mode 1 for round trip translation, 2 for plan critic with genetic algorithm, and 3 when running the repharsing experiment.
+To add new domains, create a new folder in the `domains` folder and add the `domain.pddl` file to it. Follow the structure of the existing domain. The files you will need to add for a new domain are:
+
+- `domain.pddl`
+- `domain_context.json`
+- `feedback/instance-*/instance-*.pddl`
+
+**Additionally, you will need to follow the instructions in `adherence model training/README.md` to train an instance of the critic model for that domain.**
+
+To use your new domain in an experiment, you will need to update the `experiment_config.json` file with the name of your domain and the number of the instance you want to use. Then add the problem archetypes you want to test. Each archetype should be a natural language objective that is not incompatible with the base objective of the problem instance. The value of that archetype in the dictionary should be the set of predicates that are required to be true for you to consider the plan to have satisfied the archetype. These are the constraints that will be used to determine if the critic model was correct.
 
 ## License
 
