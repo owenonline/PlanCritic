@@ -1,4 +1,4 @@
-# Plan Critic
+# Work in Progress
 
 A system for executing a plan-feedback-replan loop on a user's command, sending a natural language plan summary to the user interface, receiving their feedback, and using a genetic algorithm to evolve the plan to match that feedback.
 
