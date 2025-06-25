@@ -1,38 +1,28 @@
 import os
 import torch
 import torch.nn as nn
-from datasets import Dataset
-import pandas as pd
 import numpy as np
 import json
-from sklearn.feature_extraction.text import CountVectorizer
-from sentence_transformers import SentenceTransformer
 from transformers import AutoModel, AutoTokenizer
 from sklearn.model_selection import train_test_split
 from torch.nn.parallel import DistributedDataParallel as DDP
-import torch.multiprocessing as mp
 import wandb
+import argparse
+from collections import defaultdict
 
-DOMAIN_PROBLEMS = {
-    # 'crew-planning-temporal-satisficing': ['instance-17',
-    #                                                     'instance-9',
-    #                                                     'instance-18',
-    #                                                     'instance-12',
-    #                                                     'instance-13',
-    #                                                     'instance-1'],
-    #                     'parking-temporal-satisficing': ['instance-13',
-    #                                                     'instance-10',
-    #                                                     'instance-9',
-    #                                                     'instance-12',
-    #                                                     'instance-14',
-    #                                                     'instance-4',
-    #                                                     'instance-8',
-    #                                                     'instance-3'],
-                        "restore_waterway_no_fuel": ['instance-1',
-                                                    'instance-2',
-                                                    'instance-3',
-                                                    'instance-4',]}
+parser = argparse.ArgumentParser()
+parser.add_argument("--domain", type=str, default=None)
+args = parser.parse_args()
+domain = args.domain
 
+def create_domain_problems(domain: str):
+    problem_directory = f"/workspace/domains/{domain}/feedback"
+    domain_problems = defaultdict(list)
+    for problem in os.listdir(problem_directory):
+        domain_problems[domain].append(problem)
+    return domain_problems
+
+DOMAIN_PROBLEMS = create_domain_problems(domain)
 MAX_LEN = 2048
 OUTPUT_DIR = "reward_model_lstm"
 
@@ -198,7 +188,7 @@ def main():
     aggregated_dataset = create_dataset(DOMAIN_PROBLEMS)
     print(len(aggregated_dataset["planning_objectives"]), len(aggregated_dataset["plan_steps"]), len(aggregated_dataset["adherence"]))
 
-    combined_data = np.load("/home/owen/workareas/online-preference-learning/reward_model_embedded_data/openai.npy")
+    combined_data = np.load(f"/workspace/reward_model_embedded_data/{domain}.npy")
 
     # Prepare data for training
     X = torch.tensor(combined_data, dtype=torch.float32)

@@ -22,6 +22,14 @@ Local installation of the repository can be performed with the following steps::
     docker compose up --build -d
     ```
 
+4.  Install the dependencies
+    ```
+    docker exec -it <container_id> /bin/bash
+    pip install -e .
+    ```
+
+5.  Run the experiment
+
 ## Usage
 
 Once installed via `pip`, the test data must be generated. Follow the instructions in `adherence model training/README.md` to generate the test data. When that is finished, run the following command to execute the experiment:

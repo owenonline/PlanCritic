@@ -1,46 +1,30 @@
 import os
-import torch
-import torch.nn as nn
-from datasets import Dataset
-import pandas as pd
 import numpy as np
 import json
-from sklearn.feature_extraction.text import CountVectorizer
-from sentence_transformers import SentenceTransformer
-from tqdm import tqdm, trange
-from transformers import AutoModel, AutoTokenizer
-from sklearn.model_selection import train_test_split
-from torch.nn.parallel import DistributedDataParallel as DDP
-import torch.multiprocessing as mp
-import torch.nn.functional as F
-import wandb
+from tqdm import trange, tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
+import argparse
 import os
+from collections import defaultdict
 
 assert "OPENAI_API_KEY" in os.environ, "Please set the OPENAI_API_KEY environment variable"
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-DOMAIN_PROBLEMS = {
-    # 'crew-planning-temporal-satisficing': ['instance-17',
-    #                                                     'instance-9',
-    #                                                     'instance-18',
-    #                                                     'instance-12',
-    #                                                     'instance-13',
-    #                                                     'instance-1'],
-    #                     'parking-temporal-satisficing': ['instance-13',
-    #                                                     'instance-10',
-    #                                                     'instance-9',
-    #                                                     'instance-12',
-    #                                                     'instance-14',
-    #                                                     'instance-4',
-    #                                                     'instance-8',
-    #                                                     'instance-3'],
-                        "restore_waterway_no_fuel": ['instance-1',
-                                                    'instance-2',
-                                                    'instance-3',
-                                                    'instance-4',]}
+parser = argparse.ArgumentParser()
+parser.add_argument("--domain", type=str, default=None)
+args = parser.parse_args()
+domain = args.domain
+
+def create_domain_problems(domain: str):
+    problem_directory = f"/workspace/domains/{domain}/feedback"
+    domain_problems = defaultdict(list)
+    for problem in os.listdir(problem_directory):
+        domain_problems[domain].append(problem)
+    return domain_problems
+
+DOMAIN_PROBLEMS = create_domain_problems(domain)
 MAX_LEN = 2048
 OUTPUT_DIR = "reward_model_lstm"
 
@@ -53,7 +37,7 @@ def create_dataset(domain_problems, train_set=True):
 
     for domain in domain_problems:
         for problem in domain_problems[domain]:
-            problem_directory = os.path.join("temporal", domain, "feedback", problem)
+            problem_directory = os.path.join("/workspace/domains", domain, "feedback", problem)
 
             for data_file in ["v3data.json", "v4data.json", "v5data.json"]:
                 data_path = os.path.join(problem_directory, data_file)
@@ -81,16 +65,39 @@ def create_dataset(domain_problems, train_set=True):
 
     return dict_to_populate
 
-def pad_sequences(combined_data, max_len):
-    padded_data = []
-    for plan in combined_data:
-        if len(plan) < max_len:
-            padding = np.zeros((max_len - len(plan), plan.shape[1]))
-            padded_plan = np.vstack((plan, padding))
-        else:
-            padded_plan = plan
-        padded_data.append(padded_plan)
-    return np.array(padded_data)
+# def pad_sequences(combined_data, max_len):
+#     padded_data = []
+#     for plan in combined_data:
+#         if len(plan) < max_len:
+#             padding = np.zeros((max_len - len(plan), plan.shape[1]))
+#             padded_plan = np.vstack((plan, padding))
+#         else:
+#             padded_plan = plan
+#         padded_data.append(padded_plan)
+#     return np.array(padded_data)
+def pad_sequences(plans):
+    """
+    Takes a list of 2‑D numpy arrays (steps × embed_dim) and returns a single
+    3‑D tensor (num_plans × max_steps × embed_dim) with zero‑padding.
+
+    • Pre‑allocates the full tensor once, so only one copy is ever in RAM.
+    • Uses float32 to cut the footprint in half without touching how
+      the embeddings were *generated* earlier in the script.
+    """
+    if not plans:
+        return np.empty((0, 0, 0), dtype=np.float32)
+
+    num_plans  = len(plans)
+    max_steps  = max(p.shape[0] for p in plans)
+    embed_dim  = plans[0].shape[1]
+
+    padded = np.zeros((num_plans, max_steps, embed_dim), dtype=np.float32)
+
+    for i, plan in enumerate(plans):
+        steps = plan.shape[0]
+        padded[i, :steps, :] = plan.astype(np.float32, copy=False)
+
+    return padded
 
 aggregated_dataset = create_dataset(DOMAIN_PROBLEMS)
 
@@ -98,6 +105,8 @@ embedded_objectives = []
 for obj_idx in trange(0, len(aggregated_dataset['planning_objectives']), 1000):
     tmp_objectives = [np.array(response.embedding) for response in client.embeddings.create(input=aggregated_dataset['planning_objectives'][obj_idx:obj_idx+1000], model="text-embedding-3-small").data]
     embedded_objectives += tmp_objectives
+
+print("Objective embedding complete")
 
 def embed_plan(plan, index):
     return np.array([response.embedding for response in client.embeddings.create(input=plan, model="text-embedding-3-small").data]), index
@@ -107,9 +116,11 @@ with ThreadPoolExecutor(max_workers=30) as executor:
     for idx, plan in enumerate(aggregated_dataset['plan_steps']):
         embedded_plans_futures.append(executor.submit(embed_plan, plan, idx))
 
-    embedded_plans = [future.result() for future in as_completed(embedded_plans_futures)]
+    embedded_plans = [future.result() for future in tqdm(as_completed(embedded_plans_futures), total=len(aggregated_dataset['plan_steps']))]
     embedded_plans = sorted(embedded_plans, key=lambda x: x[1])
     embedded_plans = [plan[0] for plan in embedded_plans]
+
+print("Plan embedding complete")
 
 combined_data = []
 for objective, plan in zip(embedded_objectives, embedded_plans):
@@ -117,9 +128,16 @@ for objective, plan in zip(embedded_objectives, embedded_plans):
     combined = np.concatenate((plan, combined), axis=1)
     combined_data.append(combined)
 
+print("Concatenated data")
+
 max_steps = max([plan.shape[0] for plan in combined_data])
-padded_data = pad_sequences(combined_data, max_steps)
+print(max_steps)
+padded_data = pad_sequences(combined_data)
+
+print("Padded data")
 
 os.makedirs("reward_model_embedded_data", exist_ok=True)
-with open("reward_model_embedded_data/openai.npy", "wb") as f:
+with open(f"/workspace/adherence_model_training/reward_model_embedded_data/{domain}.npy", "wb") as f:
     np.save(f, padded_data)
+
+print("Saved data")

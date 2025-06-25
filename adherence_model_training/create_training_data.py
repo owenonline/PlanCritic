@@ -1,24 +1,16 @@
 import os
 import re
-import resource
 import tempfile
-import time
 from typing import Optional
 from openai import OpenAI
 from pydantic import BaseModel
-from parsers import OpticParser
+from plan_critic.parsers.optic_parser import OpticParser
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm, trange
 import random
 from itertools import permutations, product, zip_longest, combinations
-import chromadb
-from chromadb.utils import embedding_functions
 import json
 import argparse
-from langchain_community.chat_models import ChatOpenAI
-from langchain_core.messages import BaseMessage, FunctionMessage, HumanMessage, SystemMessage, AIMessage, ToolMessage
-import json_repair
 import instructor
 import signal
 
@@ -29,31 +21,6 @@ parser.add_argument("--problem", type=str, default=None)
 args = parser.parse_args()
 domain = args.domain
 problem = args.problem
-
-domain_problems = {'crew-planning-temporal-satisficing': ['instance-17',
-                                                    'instance-9',
-                                                    'instance-18',
-                                                    'instance-12',
-                                                    'instance-13',
-                                                    'instance-1'],
-                    'parking-temporal-satisficing': ['instance-13',
-                                              'instance-10',
-                                              'instance-9',
-                                              'instance-12',
-                                              'instance-14',
-                                              'instance-4',
-                                              'instance-8',
-                                              'instance-3'],
-                    'match-cellar-temporal-satisficing': ['instance-15',
-                                                   'instance-17',
-                                                   'instance-19',
-                                                   'instance-4',
-                                                   'instance-3',
-                                                   'instance-16'],
-                    "restore_waterway_no_fuel": ['instance-1',
-                                                    'instance-2',
-                                                    'instance-3',
-                                                    'instance-4',]}
 
 EXAMPLES = [
     {
@@ -124,18 +91,20 @@ def test_constraint_solvability(domain_path: str, problem_path: str, constraints
 
     new_problem = problem_text.replace("(:goal", f"{constraints_tag}\n(:goal")
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete_on_close=False) as tf:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False) as tf:
         tf.write(new_problem)
         candidate_problem_path = tf.name
         tf.close()
 
-        command = ["timeout", timeout, "./optic-cplex", "-N", domain_path, candidate_problem_path]
+        command = ["timeout", timeout, "/workspace/binaries/optic-cplex", "-N", domain_path, candidate_problem_path]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, 
                 universal_newlines=True, text=True, encoding="utf-8")
         
         stdout, stderr = process.communicate()
         parser = OpticParser()
         plan = parser.injest_stdout(stdout)
+
+        os.remove(candidate_problem_path)
 
         if plan is None:
             return False, None
@@ -157,7 +126,7 @@ def test_plan_adherence(domain_path: str, problem_path: str, constraint: str, ac
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(10)  # Set the alarm for 10 seconds
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete_on_close=False) as temp_problem_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False) as temp_problem_file:
             temp_problem_file.write(new_problem)
             candidate_problem_path = temp_problem_file.name
             temp_problem_file.close()
@@ -165,24 +134,28 @@ def test_plan_adherence(domain_path: str, problem_path: str, constraint: str, ac
             candidate_plan_pddl_steps = [f"{action['time_step']}: {action['action']} [{action['duration']}]" for action in actions]
             candidate_plan_block = "\n".join(candidate_plan_pddl_steps)
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete_on_close=False) as temp_plan_file:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".pddl", delete=False) as temp_plan_file:
                 temp_plan_file.write(candidate_plan_block)
                 candidate_plan_path = temp_plan_file.name
                 temp_plan_file.close()
 
-                command = ["./Validate", "-t", "0.001", "-v", domain_path, candidate_problem_path, candidate_plan_path]
+                command = ["/workspace/binaries/Validate", "-t", "0.001", "-v", domain_path, candidate_problem_path, candidate_plan_path]
                 process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, 
                         universal_newlines=True, text=True, encoding="utf-8")
                 
                 stdout, _ = process.communicate(timeout=5)
 
                 signal.alarm(0)
+
+                os.remove(candidate_problem_path)
+                os.remove(candidate_plan_path)
                 
                 if "Successful plans:" in stdout:
                     return 1
                 else:#if "Failed plans:" in stdout:
                     return 0
     except Exception as e:
+        print(e)
         print("timed out...")
         return 0
 
@@ -231,8 +204,8 @@ def create_nl_feedback(constraints: list[str], situation_info: str) -> str:
 #     domain_path = os.path.join("temporal", domain, "domain.pddl")
 
 #     for problem in domain_problems[domain]:
-domain_path = os.path.join("temporal", domain, "domain.pddl")
-problem_directory = os.path.join("temporal", domain, "feedback", problem)
+domain_path = f"/workspace/domains/{domain}/domain.pddl"# os.path.join("temporal", domain, "domain.pddl")
+problem_directory = f"/workspace/domains/{domain}/feedback/{problem}"# os.path.join("temporal", domain, "feedback", problem)
 problem_path = os.path.join(problem_directory, f"{problem}.pddl")
 situation_info_path = os.path.join(problem_directory, "situation_info.txt")
 
@@ -355,6 +328,7 @@ for raw_object_line in raw_objects:
             buffer.extend(object_names)
 
 predicate_instances = []
+print(predicates)
 for pred_name, arguments in predicates.items():
     objects_list = []
     for argument in arguments:

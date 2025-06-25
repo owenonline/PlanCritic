@@ -132,7 +132,8 @@ class FeedbackPlanner:
     def __init__(self, domain, problem, problem_archetypes, couchdb_database, constraint_model="gpt-4o") -> None:
 
         # set up the Validate path
-        self.validate_path = os.path.join("workspace", "plan_critic", "tools", "Validate")
+        # self.validate_path = os.path.join("workspace", "plan_critic", "tools", "Validate")
+        self.validate_path = "/workspace/binaries/Validate"
         
         # set up the message store
         nosql_server = couchdb.Server(url=os.environ["COUCHDB_URL"])

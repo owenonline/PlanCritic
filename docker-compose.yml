@@ -4,12 +4,16 @@ services:
   plan-critic:
     build: .
     container_name: plan-critic
+    mem_limit: 16g          # hard RAM ceiling
+    memswap_limit: 16g
     volumes:
       # Mount the current directory to /workspace to ensure code changes are reflected
       - ./adherence_model_training:/workspace/adherence_model_training
+      - ./plan_critic:/workspace/plan_critic
       - ./domains:/workspace/domains
       - ./experiment_config.json:/workspace/experiment_config.json
       - ./rephrased_goals.pkl:/workspace/rephrased_goals.pkl
+      - ./pyproject.toml:/workspace/pyproject.toml
     networks:
       - host
     environment:

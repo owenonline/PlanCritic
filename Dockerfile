@@ -21,21 +21,26 @@ RUN git clone https://github.com/KCL-Planning/VAL.git && \
 
 RUN git clone https://github.com/Dongbox/optic-clp-release.git
 
-# Create workspace directory, and copy the files needed to run plan critic. since we need to modify what we're copying during building, we can't have it as a bind mount (however, we preservea adherence model training, the domains folder, and the experiment config in that way so they can be edited without rebuilding the contianer)
+# Create workspace directory, and copy the files needed to run plan critic. since we need to modify what we're copying during building, we can't have it as a bind mount (however, we preserve adherence model training, the domains folder, and the experiment config in that way so they can be edited without rebuilding the contianer)
 WORKDIR /workspace 
-COPY plan_critic /workspace/plan_critic
-COPY pyproject.toml /workspace/pyproject.toml
+# COPY plan_critic /workspace/plan_critic
+# COPY pyproject.toml /workspace/pyproject.toml
 COPY cai_ui.png /workspace/cai_ui.png
 
 # Copy the built tool binaries to the correct location
-RUN cp /VAL/build/linux64/Release/bin/Validate /workspace/plan_critic/tools/Validate
-RUN cp /VAL/build/linux64/Release/bin/libVAL.so /workspace/plan_critic/tools/libVAL.dylib
-RUN cp /optic-clp-release/optic-clp /workspace/plan_critic/tools/optic-cplex
+# RUN cp /VAL/build/linux64/Release/bin/Validate /workspace/plan_critic/tools/Validate
+# RUN cp /VAL/build/linux64/Release/bin/libVAL.so /workspace/plan_critic/tools/libVAL.dylib
+# RUN cp /optic-clp-release/optic-clp /workspace/plan_critic/tools/optic-cplex
+RUN mkdir -p /workspace/binaries
+RUN cp /VAL/build/linux64/Release/bin/Validate /workspace/binaries/Validate
+RUN cp /VAL/build/linux64/Release/bin/libVAL.so /workspace/binaries/libVAL.dylib
+RUN cp /optic-clp-release/optic-clp /workspace/binaries/optic-cplex
+RUN chmod +x /workspace/binaries/Validate
+RUN chmod +x /workspace/binaries/optic-cplex
 
 # Install Python dependencies and PlanCritic in editable mode
 RUN cd /workspace && \
-    pip3 install --upgrade pip && \
-    pip3 install .
+    pip3 install --upgrade pip 
 
 # Set up networking to connect to host CouchDB
 # The application should use host.docker.internal:5984 when running in Docker

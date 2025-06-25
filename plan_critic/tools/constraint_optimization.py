@@ -52,8 +52,9 @@ class GeneticOptimizer:
 
         self.fitness_evaluator = FitnessEvaluator()
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.optic_path = os.path.join(current_dir, 'optic-cplex')
+        # current_dir = os.path.dirname(os.path.abspath(__file__))
+        # self.optic_path = os.path.join(current_dir, 'optic-cplex')
+        self.optic_path = "/workspace/binaries/optic-cplex"
 
         # process the problem and domain text to be ready to sample predicates
         with open(domain_path, "r") as f:
