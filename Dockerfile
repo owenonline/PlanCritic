@@ -33,7 +33,7 @@ COPY cai_ui.png /workspace/cai_ui.png
 # RUN cp /optic-clp-release/optic-clp /workspace/plan_critic/tools/optic-cplex
 RUN mkdir -p /workspace/binaries
 RUN cp /VAL/build/linux64/Release/bin/Validate /workspace/binaries/Validate
-RUN cp /VAL/build/linux64/Release/bin/libVAL.so /workspace/binaries/libVAL.dylib
+RUN cp /VAL/build/linux64/Release/bin/libVAL.so /workspace/binaries/libVAL.so
 RUN cp /optic-clp-release/optic-clp /workspace/binaries/optic-cplex
 RUN chmod +x /workspace/binaries/Validate
 RUN chmod +x /workspace/binaries/optic-cplex

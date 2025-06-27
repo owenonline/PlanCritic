@@ -12,6 +12,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--domain", type=str, default=None)
+parser.add_argument("--prefix", type=str, default="/workspace/")
 args = parser.parse_args()
 domain = args.domain
 
@@ -45,8 +46,8 @@ with ThreadPoolExecutor(max_workers=20) as executor:
 
     futures = []
 
-    domain_path = f"/workspace/domains/{domain}/domain.pddl"# os.path.join("temporal", domain, "domain.pddl")
-    problem_directory = f"/workspace/domains/{domain}/feedback"# os.path.join("temporal", domain, "feedback")
+    domain_path = f"{args.prefix}domains/{domain}/domain.pddl"
+    problem_directory = f"{args.prefix}domains/{domain}/feedback"
 
     with open(domain_path, "r") as domain_file:
         domain_text = domain_file.read()

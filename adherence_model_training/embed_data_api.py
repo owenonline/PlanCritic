@@ -8,8 +8,7 @@ import argparse
 import os
 from collections import defaultdict
 
-# PREFIX = "/workspace/"
-PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
+# PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
 
 assert "OPENAI_API_KEY" in os.environ, "Please set the OPENAI_API_KEY environment variable"
 
@@ -17,11 +16,12 @@ client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--domain", type=str, default=None)
+parser.add_argument("--prefix", type=str, default="/workspace/")
 args = parser.parse_args()
 domain = args.domain
 
 def create_domain_problems(domain: str):
-    problem_directory = f"{PREFIX}domains/{domain}/feedback"
+    problem_directory = f"{args.prefix}domains/{domain}/feedback"
     domain_problems = defaultdict(list)
     for problem in os.listdir(problem_directory):
         domain_problems[domain].append(problem)
@@ -40,7 +40,7 @@ def create_dataset(domain_problems, train_set=True):
 
     for domain in domain_problems:
         for problem in domain_problems[domain]:
-            problem_directory = os.path.join(f"{PREFIX}domains", domain, "feedback", problem)
+            problem_directory = os.path.join(f"{args.prefix}domains", domain, "feedback", problem)
 
             for data_file in ["v3data.json", "v4data.json", "v5data.json"]:
                 data_path = os.path.join(problem_directory, data_file)
@@ -68,16 +68,6 @@ def create_dataset(domain_problems, train_set=True):
 
     return dict_to_populate
 
-# def pad_sequences(combined_data, max_len):
-#     padded_data = []
-#     for plan in combined_data:
-#         if len(plan) < max_len:
-#             padding = np.zeros((max_len - len(plan), plan.shape[1]))
-#             padded_plan = np.vstack((plan, padding))
-#         else:
-#             padded_plan = plan
-#         padded_data.append(padded_plan)
-#     return np.array(padded_data)
 def pad_sequences(plans):
     """
     Takes a list of 2‑D numpy arrays (steps × embed_dim) and returns a single
@@ -139,7 +129,7 @@ padded_data = pad_sequences(combined_data)
 
 print("Padded data")
 
-np.savez(f"{PREFIX}adherence_model_training/reward_model_embedded_data/{domain}.npz", X=padded_data, y=np.asarray(aggregated_dataset['adherence']))
+np.savez(f"{args.prefix}adherence_model_training/reward_model_embedded_data/{domain}.npz", X=padded_data, y=np.asarray(aggregated_dataset['adherence']))
 # with open(f"{PREFIX}adherence_model_training/reward_model_embedded_data/{domain}.npy", "wb") as f:
 #     np.save(f, padded_data)
 

@@ -11,25 +11,7 @@ import base64
 from openai import OpenAI
 from pydantic import BaseModel
 from .tools.critic import FeedbackPlanner
-
-PREFIX = "/workspace/"
-# PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
-
-# DOMAIN_PATH = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/plan-critic/test_domain.pddl"
-# PROBLEM_PATH = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/plan-critic/test_instance.pddl"
-# PROBLEM_ARCHETYPES = [
-#     "All underwater debris is removed",
-#     "Waypoint b is made unrestricted",
-#     "No assets visit waypoint a",
-#     "Step 6 happens before step 5",
-#     "All of the underwater debris is removed and none of the normal debris is removed",
-#     "Debris asset ends at waypoint b",
-#     "All assets are at the ship dock at the end of the plan",
-#     "Scout asset reaches shipwreck before debris asset reaches shipwreck",
-#     "Scout asset reaches shipwreck before debris asset reaches shipwreck and no underwater debris is removed",
-#     "Scout asset reaches end point before debris asset moves",
-# ]
-EXPERIMENT_CONFIG = json.load(open(f"{PREFIX}experiment_config.json"))
+import uuid
 
 if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO,
@@ -43,8 +25,19 @@ if __name__ == '__main__':
 	logging.getLogger("httpcore.connection").disabled = True
 	logging.getLogger("openai._base_client").disabled = True
 
-	if os.path.exists(f"{PREFIX}rephrased_goals.pkl"):
-		with open("rephrased_goals.pkl", "rb") as f:
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--domain", type=str, default=None, required=True)
+	parser.add_argument("--prefix", type=str, default="/workspace/")
+	parser.add_argument("--rephrasing_path", type=str, default=None)
+	parser.add_argument("--save_rephrasings", type=bool, default=True)
+	args = parser.parse_args()
+	PREFIX = args.prefix
+	DOMAIN = args.domain
+
+	EXPERIMENT_CONFIG = json.load(open(f"{PREFIX}domains/{DOMAIN}/experiment_config.json"))
+
+	if args.rephrasing_path is not None:
+		with open(args.rephrasing_path, "rb") as f:
 			rephrased_goals = pickle.load(f)
 	else:
 		# rephrase the goals
@@ -52,7 +45,7 @@ if __name__ == '__main__':
 			phrasing: list[str]
 
 		# load the UI image
-		with open("cai_ui.png", "rb") as image_file:
+		with open(f"{PREFIX}cai_ui.png", "rb") as image_file:
 			encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
 		img_type="image/png"
 
@@ -85,14 +78,17 @@ if __name__ == '__main__':
 			print(f"Got {len(parsed_response.phrasing)} rephrasings for goal: {goal}")
 			rephrased_goals[goal] = parsed_response.phrasing
 
-		with open(f"{PREFIX}rephrased_goals.pkl", "wb") as f:
-			pickle.dump(rephrased_goals, f)
+		if args.save_rephrasings:
+			with open(f"{PREFIX}rephrased_goals.pkl", "wb") as f:
+				pickle.dump(rephrased_goals, f)
+				print(f"Saved rephrased goals to {PREFIX}rephrased_goals.pkl")
 	
 	planner = FeedbackPlanner(
-		domain=EXPERIMENT_CONFIG["domain"],
+		domain=DOMAIN,
 		problem=EXPERIMENT_CONFIG["problem"],
 		problem_archetypes=EXPERIMENT_CONFIG["problem_archetypes"],
-		couchdb_database=EXPERIMENT_CONFIG["couchdb_database"]
+		couchdb_database=EXPERIMENT_CONFIG["couchdb_database"],
+		prefix=PREFIX
 	)
 
 	archetypes = list(rephrased_goals.keys())

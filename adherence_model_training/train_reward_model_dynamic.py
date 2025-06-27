@@ -20,8 +20,7 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer, AutoModel
 import wandb
 
-# PREFIX = "/workspace/"
-PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
+# PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
 
 # ─────────────────────────── Device helpers ────────────────────────────
 def pick_device() -> torch.device:
@@ -43,24 +42,17 @@ def pick_device() -> torch.device:
 DEVICE = pick_device()            # Global handle
 USE_CUDA = DEVICE.type == "cuda"
 DDP_BACKEND = "nccl" if USE_CUDA else "gloo"
+BALANCE_REG_STRENGTH = 0.02
 
 # ─────────────────────────── Arg‑parsing ───────────────────────────────
 parser = argparse.ArgumentParser()
 parser.add_argument("--domain", type=str, required=True)
+parser.add_argument("--prefix", type=str, default="/workspace/")
 args = parser.parse_args()
 DOMAIN = args.domain
 
-# ─────────────────────────── Data utilities ────────────────────────────
-def create_domain_problems(domain: str) -> Dict[str, List[str]]:
-    problem_directory = f"{PREFIX}domains/{domain}/feedback"
-    domain_problems = defaultdict(list)
-    for problem in os.listdir(problem_directory):
-        domain_problems[domain].append(problem)
-    return domain_problems
-
-DOMAIN_PROBLEMS = create_domain_problems(DOMAIN)
-MAX_LEN = 2048
-OUTPUT_DIR = "reward_model_lstm"
+OUTPUT_DIR = os.path.join(args.prefix, "domains", args.domain, "model")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ───────────────────────────  Model definition  ────────────────────────
 class LSTMNetwork(nn.Module):
@@ -89,13 +81,6 @@ class LSTMNetwork(nn.Module):
                 elif "bias" in name:
                     nn.init.constant_(param.data, 0)
 
-    # def forward(self, x):
-    #     _, (hn, _) = self.lstm(x)
-    #     x = self.fc1(hn[-1])
-    #     x = self.relu(x)
-    #     x = self.dropout(x)
-    #     x = self.fc2(x)
-    #     return self.sigmoid(x)
     def forward(self, x):
         """Forward pass
         Args:
@@ -121,128 +106,6 @@ class LSTMNetwork(nn.Module):
         x = self.fc2(x)
         return self.sigmoid(x)
 
-# ─────────────────────────── Dataset assembly  ─────────────────────────
-def create_dataset(domain_problems):
-    out = {"planning_objectives": [], "plan_steps": [], "adherence": []}
-    for domain in domain_problems:
-        for problem in domain_problems[domain]:
-            root = os.path.join(PREFIX, "domains", domain, "feedback", problem)
-            for fname in ("v3data.json", "v4data.json", "v5data.json"):
-                fpath = os.path.join(root, fname)
-                if not os.path.exists(fpath):
-                    continue
-                with open(fpath) as f:
-                    data = json.load(f)
-                for item in data:
-                    steps = [act["action"] for act in item["plan"]]
-                    for fb in item["feedback"]:
-                        out["planning_objectives"].append(fb["feedback"])
-                        out["plan_steps"].append(steps)
-                        out["adherence"].append(
-                            fb.get("obeyed", fb.get("satisfied"))
-                        )
-    return out
-
-# ─────────────────────────── Encoding helper ───────────────────────────
-def encode_plans(
-    rank: int,
-    world_size: int,
-    aggregated_dataset,
-    return_list
-):
-    """
-    Distributed / single‑process adaptive encoder.
-    CUDA → DDP + NCCL   |   else → single‑process on current DEVICE
-    """
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
-
-    if USE_CUDA and world_size > 1:
-        torch.cuda.set_device(rank)
-        torch.distributed.init_process_group(
-            DDP_BACKEND, rank=rank, world_size=world_size
-        )
-
-    # Local shard
-    n = len(aggregated_dataset["plan_steps"])
-    chunk = (n + world_size - 1) // world_size
-    slc = slice(rank * chunk, min((rank + 1) * chunk, n))
-    local_plans = aggregated_dataset["plan_steps"][slc]
-    local_objectives = aggregated_dataset["planning_objectives"][slc]
-
-    # Average‑pool for sentence embeddings
-    def avg_pool(last_hidden, mask):
-        last_hidden = last_hidden.masked_fill(~mask[..., None].bool(), 0.0)
-        return last_hidden.sum(1) / mask.sum(1)[..., None]
-
-    tokenizer = AutoTokenizer.from_pretrained("intfloat/e5-base-v2")
-    base_model = AutoModel.from_pretrained("intfloat/e5-base-v2").to(DEVICE)
-
-    # Wrap in DDP if multiple CUDA GPUs are requested
-    if USE_CUDA and world_size > 1:
-        model = DDP(base_model, device_ids=[rank])
-        unwrap = lambda m: m.module
-    else:
-        model = base_model
-        unwrap = lambda m: m      # no‑op
-
-    with torch.no_grad():
-        # Objectives
-        toks_obj = tokenizer(
-            local_objectives, max_length=512,
-            padding=True, truncation=True, return_tensors="pt"
-        ).to(DEVICE)
-        enc_obj = unwrap(model)(**toks_obj)
-        enc_obj = avg_pool(enc_obj.last_hidden_state, toks_obj["attention_mask"])
-        enc_obj = enc_obj.cpu().numpy()
-
-        # Plans
-        enc_plans = []
-        for steps in local_plans:
-            toks_steps = tokenizer(
-                steps, max_length=512,
-                padding=True, truncation=True, return_tensors="pt"
-            ).to(DEVICE)
-            enc = unwrap(model)(**toks_steps)
-            enc_plans.append(
-                avg_pool(enc.last_hidden_state, toks_steps["attention_mask"])
-                .cpu().numpy()
-            )
-
-    # Gather (if distributed) or return directly
-    if USE_CUDA and world_size > 1:
-        plans_all = [None] * world_size
-        obj_all = [None] * world_size
-        torch.distributed.all_gather_object(plans_all, enc_plans)
-        torch.distributed.all_gather_object(obj_all, enc_obj)
-        if rank == 0:
-            enc_plans = [p for sub in plans_all for p in sub]
-            enc_obj = [o for o in obj_all]
-    else:
-        # single process
-        enc_plans, enc_obj = enc_plans, enc_obj
-
-    if rank == 0:
-        combined = []
-        for o, p in zip(enc_obj, enc_plans):
-            combined.append(np.concatenate(
-                (p, np.repeat(o[None, :], p.shape[0], axis=0)), axis=1
-            ))
-        return_list.extend(combined)
-
-    if USE_CUDA and world_size > 1:
-        torch.distributed.destroy_process_group()
-
-# ─────────────────────────── Utility ───────────────────────────────────
-def pad_sequences(seqs, max_len):
-    padded = []
-    for plan in seqs:
-        if len(plan) < max_len:
-            pad = np.zeros((max_len - len(plan), plan.shape[1]))
-            plan = np.vstack((plan, pad))
-        padded.append(plan)
-    return np.asarray(padded)
-
 # ───────────────────────────  Main training  ───────────────────────────
 def main():
     print("PyTorch:", torch.__version__)
@@ -252,22 +115,10 @@ def main():
     os.environ["WANDB_LOG_MODEL"] = "True"
     wandb.init(project="huggingface", entity="owenonline")
 
-    # data = create_dataset(DOMAIN_PROBLEMS)
-    # combined_data = np.load(f"{PREFIX}adherence_model_training/reward_model_embedded_data/{DOMAIN}.npy")
-
-    # # Torch tensors
-    # X = torch.tensor(combined_data, dtype=torch.float32)
-    # y = torch.tensor(data["adherence"], dtype=torch.float32).view(-1, 1)
-    data = np.load(f"{PREFIX}adherence_model_training/reward_model_embedded_data/{DOMAIN}.npz")
+    # Torch tensors
+    data = np.load(f"{args.prefix}adherence_model_training/reward_model_embedded_data/{DOMAIN}.npz")
     X = torch.tensor(data["X"], dtype=torch.float32)
     y = torch.tensor(data["y"], dtype=torch.float32).view(-1, 1)
-
-    # # Count positive and negative examples
-    # num_positive = (y == 1).sum().item()
-    # num_negative = (y == 0).sum().item()
-    # print(f"Number of positive examples: {num_positive}")
-    # print(f"Number of negative examples: {num_negative}")
-    # exit()
 
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -309,14 +160,29 @@ def main():
             for bx, by in train_loader:
                 bx, by = bx.to(DEVICE), by.to(DEVICE)
                 optimizer.zero_grad()
-                out = model(bx)
-                loss = criterion(out, by)
+
+                out   = model(bx)                           # (batch, 1) in (0,1)
+                ce    = criterion(out, by)                  # usual BCE
+
+                # ────────────── entropy-style regularizer ──────────────-------------
+                # high entropy (≈0.5) ⇒ small penalty, low entropy (≈0 or 1) ⇒ large
+                eps = 1e-7                                   # avoid log(0)
+                entropy = -(out * (out + eps).log() +
+                           (1 - out) * (1 - out + eps).log())   # (batch,1)
+                reg = BALANCE_REG_STRENGTH * (-entropy.mean())  #  ↑penalise low entropy
+                # --------------------------------------------------------------------
+
+                loss = ce + reg
                 loss.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
                 running += loss.item()
-            wandb.log({"epoch": block * INNER_EPOCHS + epoch + 1,
-                       "train_loss": running / len(train_loader)})
+
+            wandb.log({
+                "epoch": block * INNER_EPOCHS + epoch + 1,
+                "train_loss": running / len(train_loader),
+                "reg_weight": BALANCE_REG_STRENGTH
+            })
 
         # ── Validation ────────────────────────────────────────────────
         model.eval()
@@ -339,7 +205,6 @@ def main():
         # Save best
         if acc > best_acc and vloss < best_loss:
             best_acc, best_loss = acc, vloss
-            os.makedirs(OUTPUT_DIR, exist_ok=True)
             path = os.path.join(OUTPUT_DIR, "best_lstm_model.pth")
             torch.save(model.state_dict(), path)
             wandb.save(path)
@@ -349,7 +214,6 @@ def main():
               f"best_loss={best_loss:.4f}  best_acc={best_acc:.4f}")
 
     # ── Final save ──────────────────────────────────────────────────
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(OUTPUT_DIR, "lstm_model.pth"))
     wandb.save(os.path.join(OUTPUT_DIR, "lstm_model.pth"))
     print("Training complete.")

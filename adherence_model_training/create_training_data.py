@@ -17,6 +17,7 @@ import signal
 parser = argparse.ArgumentParser()
 parser.add_argument("--domain", type=str, default=None)
 parser.add_argument("--problem", type=str, default=None)
+parser.add_argument("--prefix", type=str, default="/workspace/")
 
 args = parser.parse_args()
 domain = args.domain
@@ -96,7 +97,7 @@ def test_constraint_solvability(domain_path: str, problem_path: str, constraints
         candidate_problem_path = tf.name
         tf.close()
 
-        command = ["timeout", timeout, "/workspace/binaries/optic-cplex", "-N", domain_path, candidate_problem_path]
+        command = ["timeout", timeout, f"{args.prefix}binaries/optic-cplex", "-N", domain_path, candidate_problem_path]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, 
                 universal_newlines=True, text=True, encoding="utf-8")
         
@@ -139,7 +140,7 @@ def test_plan_adherence(domain_path: str, problem_path: str, constraint: str, ac
                 candidate_plan_path = temp_plan_file.name
                 temp_plan_file.close()
 
-                command = ["/workspace/binaries/Validate", "-t", "0.001", "-v", domain_path, candidate_problem_path, candidate_plan_path]
+                command = [f"{args.prefix}binaries/Validate", "-t", "0.001", "-v", domain_path, candidate_problem_path, candidate_plan_path]
                 process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, 
                         universal_newlines=True, text=True, encoding="utf-8")
                 
@@ -200,12 +201,8 @@ def create_nl_feedback(constraints: list[str], situation_info: str) -> str:
 
     return response_list
 
-# for domain in domain_problems:
-#     domain_path = os.path.join("temporal", domain, "domain.pddl")
-
-#     for problem in domain_problems[domain]:
-domain_path = f"/workspace/domains/{domain}/domain.pddl"# os.path.join("temporal", domain, "domain.pddl")
-problem_directory = f"/workspace/domains/{domain}/feedback/{problem}"# os.path.join("temporal", domain, "feedback", problem)
+domain_path = f"{args.prefix}domains/{domain}/domain.pddl"
+problem_directory = f"{args.prefix}domains/{domain}/feedback/{problem}"
 problem_path = os.path.join(problem_directory, f"{problem}.pddl")
 situation_info_path = os.path.join(problem_directory, "situation_info.txt")
 
@@ -328,7 +325,6 @@ for raw_object_line in raw_objects:
             buffer.extend(object_names)
 
 predicate_instances = []
-print(predicates)
 for pred_name, arguments in predicates.items():
     objects_list = []
     for argument in arguments:
@@ -514,7 +510,7 @@ if not success:
     print(f"[{domain} - {problem} - 0.00%] Base plan is unsolvable. Exiting.")
     exit()
 
-desired_len = 500
+desired_len = 5#00
 
 while len(complete_feedback_instances) < desired_len:
     new_instance = {}

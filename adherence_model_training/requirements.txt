@@ -1,5 +1,5 @@
 torch
 datasets
 pandas
-sklearn
+scikit-learn
 wandb

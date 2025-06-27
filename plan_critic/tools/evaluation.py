@@ -44,13 +44,12 @@ class LSTMNetwork(nn.Module):
         return x
     
 class FitnessEvaluator:
-    def __init__(self):
+    def __init__(self, domain, prefix):
         self.fitness_model = LSTMNetwork(3072, 512, 1, 2) # 1 for old model, 2 for new model
         # self.fitness_model = nn.DataParallel(self.fitness_model)
         self.fitness_model.to(device)
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(current_dir, 'best_lstm_model.pth')
+        model_path = f"{prefix}domains/{domain}/model/best_lstm_model.pth"
         self.fitness_model.load_state_dict(torch.load(model_path, map_location=device))
 
     def __call__(self, plans, objectives):

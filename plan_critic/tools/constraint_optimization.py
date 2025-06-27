@@ -40,7 +40,12 @@ class pddltype:
         return str(self.objects)
 
 class GeneticOptimizer:
-    def __init__(self, problem_path, domain_path, max_iter: Optional[int]=3):
+    def __init__(self, problem, domain, max_iter: Optional[int]=3, prefix="/workspace/"):
+        self.prefix = prefix
+
+        problem_path = f"{prefix}domains/{domain}/feedback/instance-{problem}/instance-{problem}.pddl"
+        domain_path = f"{prefix}domains/{domain}/domain.pddl"
+
         with open(problem_path, "r") as f:
             self.problem_text = f.read()
 
@@ -50,11 +55,11 @@ class GeneticOptimizer:
         self.domain_path = domain_path
         self.max_iter = max_iter
 
-        self.fitness_evaluator = FitnessEvaluator()
+        self.fitness_evaluator = FitnessEvaluator(domain, prefix)
 
         # current_dir = os.path.dirname(os.path.abspath(__file__))
         # self.optic_path = os.path.join(current_dir, 'optic-cplex')
-        self.optic_path = "/workspace/binaries/optic-cplex"
+        self.optic_path = f"{prefix}binaries/optic-cplex"
 
         # process the problem and domain text to be ready to sample predicates
         with open(domain_path, "r") as f:

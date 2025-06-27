@@ -28,7 +28,7 @@ from .constraint_optimization import GeneticOptimizer, OptimizationResult
 from .map_handling import MapHandler
 import pickle
 
-PREFIX = "/workspace/"
+# PREFIX = "/workspace/"
 # PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
 
 POP_SIZE = 20
@@ -47,11 +47,13 @@ class FeedbackPlannerState(TypedDict):
 
 class FeedbackPlanner:
 
-    def __init__(self, domain, problem, problem_archetypes, couchdb_database, constraint_model="gpt-4o") -> None:
+    def __init__(self, domain, problem, problem_archetypes, couchdb_database, constraint_model="gpt-4o", prefix="/workspace/") -> None:
+
+        self.prefix = prefix
 
         # set up the Validate path
         # self.validate_path = os.path.join("workspace", "plan_critic", "tools", "Validate")
-        self.validate_path = f"{PREFIX}binaries/Validate"
+        self.validate_path = f"{self.prefix}binaries/Validate"
         
         # set up the message store
         nosql_server = couchdb.Server(url=os.environ["COUCHDB_URL"])
@@ -66,12 +68,12 @@ class FeedbackPlanner:
         self.constraint_model_id = constraint_model
 
         # store the class-level values we'll be using
-        self.domain_path = f"{PREFIX}domains/{domain}/domain.pddl"
-        self.problem_path = f"{PREFIX}domains/{domain}/feedback/instance-{problem}/instance-{problem}.pddl"
+        self.domain_path = f"{self.prefix}domains/{domain}/domain.pddl"
+        self.problem_path = f"{self.prefix}domains/{domain}/feedback/instance-{problem}/instance-{problem}.pddl"
         self.problem_archetypes = problem_archetypes
 
         # retreive and store the domain specific context
-        with open(f"{PREFIX}domains/{domain}/domain_context.json", "r") as f:
+        with open(f"{self.prefix}domains/{domain}/domain_context.json", "r") as f:
             domain_context = json.load(f)
 
             self.feedback_process_examples = domain_context['feedback_process_examples']
@@ -79,7 +81,7 @@ class FeedbackPlanner:
             self.action_explanations = domain_context['action_explanations']
 
         # set up the genetic optimizer
-        self.genetic_optimizer = GeneticOptimizer(self.problem_path, self.domain_path)
+        self.genetic_optimizer = GeneticOptimizer(problem, domain, prefix=self.prefix)
 
         # create the initial plan, to be used as the base plan for each replanning attempt
         success, plan = self.genetic_optimizer._plan([])

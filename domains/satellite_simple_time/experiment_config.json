@@ -1,0 +1,10 @@
+{
+    "problem": 1,
+    "problem_archetypes": {
+        "Take a the picture of the Star5 before Phenomenon4": ["(sometime-before (have_image Phenomenon4 thermograph0) (have_image Star5 thermograph0))"],
+        "End with the satellite pointing at Phenomenon6": ["(at end (pointing sat_0 Phenomenon6))"],
+        "End with the satellite pointing at Phenomenon4": ["(at end (pointing sat_0 Phenomenon4))"],
+        "Take a spectrograph image of ground station 1": ["(sometime (have_image GroundStation1 spectrograph2))"]
+    },
+    "couchdb_database": "satellite_simple_time_june_2"
+}

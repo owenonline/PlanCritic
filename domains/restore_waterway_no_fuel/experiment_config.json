@@ -1,5 +1,4 @@
 {
-    "domain": "restore_waterway_no_fuel",
     "problem": 1,
     "problem_archetypes": {
         "All underwater debris is removed": ["(at end (is_location_not_blocked wpt_ini wpt_b_0))", "(at end (is_location_not_blocked wpt_b_0 wpt_end))"],

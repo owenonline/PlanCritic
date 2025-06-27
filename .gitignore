@@ -2,3 +2,5 @@
 **/__pycache__/
 *.npy
 **/wandb/
+**/reward_model_embedded_data/
+**/reward_model_lstm/
