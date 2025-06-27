@@ -15,7 +15,7 @@ wandb login
 Generate natural language descriptions for your domain's problem instances:
 
 ```bash
-python create_situation_info.py --domain <domain_name>
+python3 create_situation_info.py --domain <domain_name>
 ```
 
 This script:
@@ -27,7 +27,7 @@ This script:
 Create synthetic training data with plan-constraint pairs:
 
 ```bash
-python create_training_data.py --domain <domain_name> --problem <problem_name>
+python3 create_training_data.py --domain <domain_name> --problem <problem_name>
 ```
 
 This script:
@@ -41,7 +41,7 @@ This script:
 Convert text data to numerical embeddings:
 
 ```bash
-python embed_data_api.py --domain <domain_name>
+python3 embed_data_api.py --domain <domain_name>
 ```
 
 This script:
@@ -57,7 +57,7 @@ This script:
 Train the LSTM-based reward model:
 
 ```bash
-python train_reward_model_dynamic.py --domain <domain_name>
+python3 train_reward_model_dynamic.py --domain <domain_name>
 ```
 
 **Model Architecture:**
