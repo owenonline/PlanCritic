@@ -20,6 +20,9 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer, AutoModel
 import wandb
 
+# PREFIX = "/workspace/"
+PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
+
 # ─────────────────────────── Device helpers ────────────────────────────
 def pick_device() -> torch.device:
     """
@@ -49,7 +52,7 @@ DOMAIN = args.domain
 
 # ─────────────────────────── Data utilities ────────────────────────────
 def create_domain_problems(domain: str) -> Dict[str, List[str]]:
-    problem_directory = f"/workspace/domains/{domain}/feedback"
+    problem_directory = f"{PREFIX}domains/{domain}/feedback"
     domain_problems = defaultdict(list)
     for problem in os.listdir(problem_directory):
         domain_problems[domain].append(problem)
@@ -86,8 +89,32 @@ class LSTMNetwork(nn.Module):
                 elif "bias" in name:
                     nn.init.constant_(param.data, 0)
 
+    # def forward(self, x):
+    #     _, (hn, _) = self.lstm(x)
+    #     x = self.fc1(hn[-1])
+    #     x = self.relu(x)
+    #     x = self.dropout(x)
+    #     x = self.fc2(x)
+    #     return self.sigmoid(x)
     def forward(self, x):
-        _, (hn, _) = self.lstm(x)
+        """Forward pass
+        Args:
+            x (Tensor): shape (batch, seq_len, embed_dim); rows that are all‑zeros are padding.
+        Returns:
+            Tensor: adherence probability for each plan (batch, 1)
+        """
+        # --- build a length tensor: how many *non‑zero* timesteps per plan
+        lengths = (x.abs().sum(-1) > 0).sum(-1)            # (batch,)
+
+        # --- pack the batch so the LSTM only sees real steps
+        packed = nn.utils.rnn.pack_padded_sequence(
+            x, lengths.cpu(), batch_first=True, enforce_sorted=False
+        )
+
+        # --- LSTM over packed sequence
+        _, (hn, _) = self.lstm(packed)
+
+        # --- Classification head
         x = self.fc1(hn[-1])
         x = self.relu(x)
         x = self.dropout(x)
@@ -99,7 +126,7 @@ def create_dataset(domain_problems):
     out = {"planning_objectives": [], "plan_steps": [], "adherence": []}
     for domain in domain_problems:
         for problem in domain_problems[domain]:
-            root = os.path.join("/workspace/domains", domain, "feedback", problem)
+            root = os.path.join(PREFIX, "domains", domain, "feedback", problem)
             for fname in ("v3data.json", "v4data.json", "v5data.json"):
                 fpath = os.path.join(root, fname)
                 if not os.path.exists(fpath):
@@ -225,12 +252,22 @@ def main():
     os.environ["WANDB_LOG_MODEL"] = "True"
     wandb.init(project="huggingface", entity="owenonline")
 
-    data = create_dataset(DOMAIN_PROBLEMS)
-    combined_data = np.load(f"/workspace/adherence_model_training/reward_model_embedded_data/{DOMAIN}.npy")
+    # data = create_dataset(DOMAIN_PROBLEMS)
+    # combined_data = np.load(f"{PREFIX}adherence_model_training/reward_model_embedded_data/{DOMAIN}.npy")
 
-    # Torch tensors
-    X = torch.tensor(combined_data, dtype=torch.float32)
-    y = torch.tensor(data["adherence"], dtype=torch.float32).view(-1, 1)
+    # # Torch tensors
+    # X = torch.tensor(combined_data, dtype=torch.float32)
+    # y = torch.tensor(data["adherence"], dtype=torch.float32).view(-1, 1)
+    data = np.load(f"{PREFIX}adherence_model_training/reward_model_embedded_data/{DOMAIN}.npz")
+    X = torch.tensor(data["X"], dtype=torch.float32)
+    y = torch.tensor(data["y"], dtype=torch.float32).view(-1, 1)
+
+    # # Count positive and negative examples
+    # num_positive = (y == 1).sum().item()
+    # num_negative = (y == 0).sum().item()
+    # print(f"Number of positive examples: {num_positive}")
+    # print(f"Number of negative examples: {num_negative}")
+    # exit()
 
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -246,7 +283,7 @@ def main():
     )
 
     model = LSTMNetwork(
-        input_dim=combined_data.shape[2],
+        input_dim=X.shape[2],
         hidden_dim=512, output_dim=1, num_layers=2
     )
 

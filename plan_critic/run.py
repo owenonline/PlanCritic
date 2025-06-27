@@ -12,6 +12,9 @@ from openai import OpenAI
 from pydantic import BaseModel
 from .tools.critic import FeedbackPlanner
 
+PREFIX = "/workspace/"
+# PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
+
 # DOMAIN_PATH = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/plan-critic/test_domain.pddl"
 # PROBLEM_PATH = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/plan-critic/test_instance.pddl"
 # PROBLEM_ARCHETYPES = [
@@ -26,7 +29,7 @@ from .tools.critic import FeedbackPlanner
 #     "Scout asset reaches shipwreck before debris asset reaches shipwreck and no underwater debris is removed",
 #     "Scout asset reaches end point before debris asset moves",
 # ]
-EXPERIMENT_CONFIG = json.load(open("/workspace/experiment_config.json"))
+EXPERIMENT_CONFIG = json.load(open(f"{PREFIX}experiment_config.json"))
 
 if __name__ == '__main__':
 	logging.basicConfig(level=logging.INFO,
@@ -40,7 +43,7 @@ if __name__ == '__main__':
 	logging.getLogger("httpcore.connection").disabled = True
 	logging.getLogger("openai._base_client").disabled = True
 
-	if "rephrased_goals.pkl" in os.listdir():
+	if os.path.exists(f"{PREFIX}rephrased_goals.pkl"):
 		with open("rephrased_goals.pkl", "rb") as f:
 			rephrased_goals = pickle.load(f)
 	else:
@@ -82,7 +85,7 @@ if __name__ == '__main__':
 			print(f"Got {len(parsed_response.phrasing)} rephrasings for goal: {goal}")
 			rephrased_goals[goal] = parsed_response.phrasing
 
-		with open("rephrased_goals.pkl", "wb") as f:
+		with open(f"{PREFIX}rephrased_goals.pkl", "wb") as f:
 			pickle.dump(rephrased_goals, f)
 	
 	planner = FeedbackPlanner(

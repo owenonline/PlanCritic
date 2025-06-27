@@ -1,0 +1,70 @@
+{
+    "feedback_process_examples": [
+      {
+        "new_goal": [
+          "Make sure the camera instrument (`cam_inst_0`) is only powered on once during the entire mission",
+          "Ensure that after it is powered off, the satellite (`sat_0`) does not attempt to recalibrate `cam_inst_0` again"
+        ],
+        "old_goals": [
+          "Limit the camera instrument (`cam_inst_0`) to being powered on at most two times during the mission.",
+          "Allow the camera instrument (`cam_inst_0`) to be recalibrated at any time it is powered on."
+        ],
+        "new_goal_list": [
+          "Ensure that the instrument `cam_inst_0` is powered on at most once and never recalibrated after it is switched off."
+        ]
+      },
+      {
+        "new_goal": [
+          "We need to capture an infrared image of the `mars_crater` direction within the first 20 time steps"
+        ],
+        "new_goal_list": [
+          "Ensure that by time step 20, the predicate `have_image(mars_crater, mode_infrared)` is true."
+        ]
+      },
+      {
+        "new_goal": [
+          "Don't take any images of the `sun` direction"
+        ],
+        "new_goal_list": [
+          "Ensure that the predicate `have_image(sun, mode_optical)` is never true at any time.",
+          "Ensure that the predicate `have_image(sun, mode_infrared)` is never true at any time."
+        ]
+      },
+      {
+        "new_goal": [
+          "Ensure that the satellite never turns away from `earth` once it is pointing there"
+        ],
+        "new_goal_list": [
+          "Ensure that after the first time step in which `pointing(sat_0, earth)` becomes true, it remains true for the remainder of the plan."
+        ]
+      }
+    ],
+  
+    "constraint_translation_examples": [
+      {
+        "nl": "At the end of the plan, ensure that the satellite `sat_0` is pointing at `earth`.",
+        "pred": "(at end (pointing sat_0 earth))"
+      },
+      {
+        "nl": "Ensure that the instrument `cam_inst_0` is powered on at most once during the entire mission.",
+        "pred": "(at-most-once (power_on cam_inst_0))"
+      },
+      {
+        "nl": "Ensure that, after time step 10, the instrument `cam_inst_0` remains calibrated for the rest of the mission.",
+        "pred": "(hold-after 10 (calibrated cam_inst_0))"
+      },
+      {
+        "nl": "Ensure that either the satellite `sat_0` always points to `mars`, or we have an optical image of `moon` at the end of the mission.",
+        "pred": "(at end (or (always (pointing sat_0 mars)) (have_image moon mode_optical)))"
+      }
+    ],
+  
+    "action_explanations": {
+      "turn_to": "(?s - satellite ?d_new - direction ?d_prev - direction) -> satellite turns its orientation from d_prev to d_new",
+      "switch_on": "(?i - instrument ?s - satellite) -> satellite supplies power to instrument, switching it on",
+      "switch_off": "(?i - instrument ?s - satellite) -> satellite removes power from instrument, switching it off",
+      "calibrate": "(?s - satellite ?i - instrument ?d - direction) -> satellite calibrates instrument while pointing at its calibration target direction",
+      "take_image": "(?s - satellite ?d - direction ?i - instrument ?m - mode) -> satellite takes an image of direction d in mode m using instrument"
+    }
+  }
+  

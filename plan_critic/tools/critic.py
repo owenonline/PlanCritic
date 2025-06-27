@@ -28,90 +28,8 @@ from .constraint_optimization import GeneticOptimizer, OptimizationResult
 from .map_handling import MapHandler
 import pickle
 
-# FEEDBACK_PROCESS_EXAMPLES = [
-#     {
-#         "new_goal": ["Make sure the scout asset only visits the endpoint once", "Make sure the scout asset and salvage asset cross paths at most once"],
-#         "old_goals": [
-#             "Limit the scout asset (`sct_ast_0`) to visiting the endpoint (`wpt_end`) at most one time throughout the entire plan.",
-#             "Ensure that the ship salvage asset (`shp_sal_ast_0`) is only on top of the scout asset (`sct_ast_0`) at most once throughout the entire plan."
-#         ],
-#         "new_goal_list": [
-#             "Ensure that either the debris asset (`deb_ast_0`) is only on underwater debris `u_deb_b_0_end` at most once, or the ship salvage asset (`shp_sal_ast_0`) is only on top of the scout asset (`sct_ast_0`) at most once throughout the entire plan."
-#         ]
-#     },
-#     {
-#         "new_goal": ["We need to clear the route from debris station 0 to the endpoint within 5 hours"],
-#         "new_goal_list": [
-#             "Ensure that after time step 5, the route between `deb_stn_0` and `wpt_end` is always unblocked."
-#         ]
-#     },
-#     {
-#         "new_goal": ["Don't remove any underwater debris"],
-#         "new_goal_list": [
-#             "Ensure that the underwater debris u_deb_ini_b_0 remains at wpt_ini at all times.",
-#             "Ensure that the underwater debris u_deb_b_0_end remains at wpt_b_0 at all times.",
-#         ]
-#     },
-#     {
-#         "new_goal": ["Ensure that we never visit waypoint a"],
-#         "new_goal_list": [
-#             "Ensure that the scout asset `sct_ast_0` never visits `wpt_a_0`.",
-#             "Ensure that the debris asset `deb_ast_0` never visits `wpt_a_0`.",
-#             "Ensure that the ship salvage asset `shp_sal_ast_0` never visits `wpt_a_0`."
-#         ]
-#     }
-# ]
-
-# CONSTRAINT_TRANSLATION_EXAMPLES = [
-#     {
-#         "nl": "At the end of the plan, ensure that either there is a connected route from `wpt_a_0` to `shp_dck_0`, or the route from `wpt_b_0` to `wpt_ini` is not blocked.",
-#         "pred": "(at end (or (is_location_connected wpt_a_0 shp_dck_0) (is_location_not_blocked wpt_b_0 wpt_ini)))",
-#     },
-#     {
-#         "nl": "Ensure that either the scout asset `sct_ast_0` never visits `wpt_end` or location `deb_stn_0` is always blocked for traversal to `wpt_end`, but not both at the same time.",
-#         "pred": "(at-most-once (or (at sct_ast_0 wpt_end) (is_location_not_blocked deb_stn_0 wpt_end)))",
-#     },
-#     {
-#         "nl": "Ensure that, at all times, there is a clear path between `wpt_ini` and `wpt_a_0`, and also between `deb_stn_0` and `wpt_ini`. Keep these routes unblocked throughout the entire process of restoring the waterway.",
-#         "pred": "(always (and (is_location_connected wpt_ini wpt_a_0) (is_location_connected deb_stn_0 wpt_ini)))"
-#     },
-#     {
-#         "nl": "Ensure that, two time steps into the plan, the scout asset `sct_ast_0` is at location `n_deb_ini_a_0`.",
-#         "pred": "(hold-after 2 (on sct_ast_0 n_deb_ini_a_0))"
-#     },
-#     {
-#         "nl": "At the end of the plan, ensure that the underwater debris `u_deb_ini_b_0` is at location `wpt_b_0`.",
-#         "pred": "(at end (at u_deb_ini_b_0 wpt_b_0))"
-#     }
-# ]
-
-# ACTION_EXPLANATIONS = {
-#     "move_debris_asset": "(?loc1 - location ?loc2 - location ?ast - debris_asset) -> moves debris_asset from loc1 to loc2",
-#     "remove_normal_debris_total": "(?loc1 - location ?loc2 - location ?deb - normal_debris ?ast - debris_asset) -> removes the debris normal_debris covering loc1 and loc2 using debris_asset",
-#     "remove_normal_debris_partial": "(?loc1 - location ?loc2 - location ?deb - normal_debris ?ast - debris_asset) -> removes the debris normal_debris covering loc1 and loc2 partially using debris_asset",
-#     "remove_underwater_debris_total": "(?loc1 - location ?loc2 - location ?deb - underwater_debris ?ast - debris_asset) -> removes the debris underwater_debris covering loc1 and loc2 using debris_asset",
-#     "remove_underwater_debris_partial": "(?loc1 - location ?loc2 - location ?deb - underwater_debris ?ast - debris_asset) -> removes the debris underwater_debris covering loc1 and loc2 partially using debris_asset",
-#     "unload_debris_debris_station": "(?loc - location ?ast - debris_asset) -> debris_asset unloads all of the debris it is carrying at debris station loc",
-#     "move_scout_asset": "(?loc1 - location ?loc2 - location ?ast - scout_asset) -> moves scout_asset from loc1 to loc2",
-#     "scout_location": "(?loc - location ?ast - scout_asset) -> scout_asset scouts location loc, making any underwater debris at loc visible to the other assets",
-#     "move_ship_salvage_asset": "(?loc1 - location ?loc2 - location ?ast - ship_salvage_asset) -> moves ship_salvage_asset from loc1 to loc2",
-#     "ship_salvage_asset_salvage_ship": "(?loc - location ?shp - ship ?ast - ship_salvage_asset) -> salvage asset ship_salvage_asset salvages ship shp located at loc",
-#     "ship_salvage_asset_dock_ship": "(?loc - location ?shp - ship ?ast - ship_salvage_asset) -> ship_salvage_asset docks ship shp (which it had previously salvaged) at a dock specified by loc",
-#     "authority_make_location_unrestricted": "(?loc - location ?aut - authority) -> authority aut makes location loc unrestricted, allowing assets to travel to it."
-# }
-
-# PROBLEM_ARCHETYPES = {
-#     "All underwater debris is removed": ["(at end (is_location_not_blocked wpt_ini wpt_b_0))", "(at end (is_location_not_blocked wpt_b_0 wpt_end))"],
-#     "Waypoint b is made unrestricted": ["(at end (is_location_unrestricted wpt_b_0))"],
-#     "Scout asset reaches end point before debris asset moves": ["(sometime-before (at deb_ast_0 wpt_a_0) (at sct_ast_0 wpt_end))", "(sometime-before (at deb_ast_0 wpt_b_0) (at sct_ast_0 wpt_end))", "(sometime-before (at deb_ast_0 shp_dck_0) (at sct_ast_0 wpt_end))", "(sometime-before (at deb_ast_0 deb_stn_0) (at sct_ast_0 wpt_end))"],
-#     "No assets visit waypoint a": ["(always (not (at deb_ast_0 wpt_a_0)))", "(always (not (at sct_ast_0 wpt_a_0)))", "(always (not (at shp_sal_ast_0 wpt_a_0)))"],
-#     "Step 6 happens before step 5": ["(sometime-before (not (at shp_sal_ast_0 wpt_ini)) (is_underwater_debris_visible wpt_end))", "(sometime-before (not (at deb_ast_0 wpt_ini)) (is_underwater_debris_visible wpt_end))"],
-#     "All of the underwater debris is removed and none of the normal debris is removed": ["(at end (is_location_not_blocked wpt_ini wpt_b_0))", "(at end (is_location_not_blocked wpt_b_0 wpt_end))", "(at end (at n_deb_ini_a_0 wpt_a_0))", "(at end (at n_deb_a_0_end wpt_a_0))"],
-#     "Debris asset ends at waypoint b": ["(at end (at deb_ast_0 wpt_b_0))"],
-#     "All assets are at the ship dock at the end of the plan": ["(at end (at deb_ast_0 shp_dck_0))", "(at end (at shp_sal_ast_0 shp_dck_0))", "(at end (at sct_ast_0 shp_dck_0))"],
-#     "Scout asset reaches shipwreck before debris asset reaches shipwreck": ["(sometime-before (at deb_ast_0 wpt_end) (at sct_ast_0 wpt_end))"],
-#     "Scout asset reaches shipwreck before debris asset reaches shipwreck and no underwater debris is removed": ["(sometime-before (at deb_ast_0 wpt_end) (at sct_ast_0 wpt_end))", "(at end (at u_deb_ini_b_0 wpt_b_0))", "(at end (at u_deb_b_0_end wpt_b_0))"]
-# }
+PREFIX = "/workspace/"
+# PREFIX = "/Users/owenburns/workareas/Carnegie Mellon PlanCritic/PlanCritic/"
 
 POP_SIZE = 20
 
@@ -133,7 +51,7 @@ class FeedbackPlanner:
 
         # set up the Validate path
         # self.validate_path = os.path.join("workspace", "plan_critic", "tools", "Validate")
-        self.validate_path = "/workspace/binaries/Validate"
+        self.validate_path = f"{PREFIX}binaries/Validate"
         
         # set up the message store
         nosql_server = couchdb.Server(url=os.environ["COUCHDB_URL"])
@@ -148,12 +66,12 @@ class FeedbackPlanner:
         self.constraint_model_id = constraint_model
 
         # store the class-level values we'll be using
-        self.domain_path = f"/workspace/domains/{domain}/domain.pddl"
-        self.problem_path = f"/workspace/domains/{domain}/feedback/instance-{problem}/instance-{problem}.pddl"
+        self.domain_path = f"{PREFIX}domains/{domain}/domain.pddl"
+        self.problem_path = f"{PREFIX}domains/{domain}/feedback/instance-{problem}/instance-{problem}.pddl"
         self.problem_archetypes = problem_archetypes
 
         # retreive and store the domain specific context
-        with open(f"/workspace/domains/{domain}/domain_context.json", "r") as f:
+        with open(f"{PREFIX}domains/{domain}/domain_context.json", "r") as f:
             domain_context = json.load(f)
 
             self.feedback_process_examples = domain_context['feedback_process_examples']
